@@ -14,7 +14,7 @@ const images = {
     logo: require("../assets/logo.png"),
 }
 
-const Home = () => {
+const Home = ({ navigation }) => {
     const [username, onChangeUsername] = React.useState("");
 
     return (
@@ -34,10 +34,10 @@ const Home = () => {
                         />
                     </View>
                     <View style={{ margin: 5 }}>
-                        <TouchableOpacity
-                            onPress={() => {
-                                console.log("username: " + (username === "" ? "Null username" : username));
-                            }}>
+                        <TouchableOpacity onPress={() => {
+                            // TODO: alert if user doesn't enter name
+                            navigation.navigate("Game", { username: username === "" ? "stranger" : username });
+                        }}>
                             <StyleText fontSize={20} color="#FFD700" style={styles.textShadow}>開始遊戲</StyleText>
                         </TouchableOpacity>
                     </View>
