@@ -7,14 +7,14 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { StyleText } from "./component/components";
+import { StyleText } from "../component/components";
 
 const images = {
-    background: require("./assets/background.jpg"),
-    logo: require("./assets/logo.png"),
+    background: require("../assets/background.jpg"),
+    logo: require("../assets/logo.png"),
 }
 
-const App = () => {
+const Home = () => {
     const [username, onChangeUsername] = React.useState("");
 
     return (
@@ -87,4 +87,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default App;
+export default Home;
