@@ -22,11 +22,11 @@ const Home = ({ navigation }) => {
             <ImageBackground source={images.background} style={styles.imageBackground}>
                 <View>
                     <Image source={images.logo} style={{ width: 90, height: 90 }} />
-                    <StyleText fontSize={30} color="#FFD700" fontWeight="bold" style={styles.textShadow}>情書</StyleText>
+                    <StyleText fontSize={30} color="gold" fontWeight="bold" style={styles.textShadow}>情書</StyleText>
                 </View>
                 <View style={styles.inputNameContainer}>
                     <View style={{ flexDirection: "row" }}>
-                        <StyleText fontSize={20} color="#FFD700" style={styles.textShadow}>暱稱：</StyleText>
+                        <StyleText fontSize={20} color="gold" style={styles.textShadow}>暱稱：</StyleText>
                         <TextInput
                             value={username}
                             onChangeText={text => onChangeUsername(text)}
@@ -38,12 +38,12 @@ const Home = ({ navigation }) => {
                             // TODO: alert if user doesn't enter name
                             navigation.navigate("Game", { username: username === "" ? "stranger" : username });
                         }}>
-                            <StyleText fontSize={20} color="#FFD700" style={styles.textShadow}>開始遊戲</StyleText>
+                            <StyleText fontSize={20} color="gold" style={styles.textShadow}>開始遊戲</StyleText>
                         </TouchableOpacity>
                     </View>
                 </View>
             </ImageBackground>
-        </View >
+        </View>
     );
 }
 

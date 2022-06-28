@@ -5,21 +5,22 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { StyleText } from "../component/components";
+import { StyleText, Manual } from "../component/components";
 
 const Game = ({ route, navigation }) => {
     const { username } = route.params;
 
     return (
         <View style={styles.container}>
+            <Manual />
             <Text>Hello, {username}</Text>
             <TouchableOpacity onPress={() => {
                 navigation.goBack();
                 // TODO: clean up username at Home
             }}>
-                <StyleText fontSize={20} color="#FFD700" style={styles.textShadow}>離開</StyleText>
+                <StyleText fontSize={20} color="gold" style={styles.textShadow}>離開</StyleText>
             </TouchableOpacity>
-        </View >
+        </View>
     );
 }
 
