@@ -16,7 +16,6 @@ const Game = ({ route, navigation }) => {
             <Text>Hello, {username}</Text>
             <TouchableOpacity onPress={() => {
                 navigation.goBack();
-                // TODO: clean up username at Home
             }}>
                 <StyleText fontSize={20} color="gold" style={styles.textShadow}>離開</StyleText>
             </TouchableOpacity>

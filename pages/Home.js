@@ -15,7 +15,18 @@ const images = {
 }
 
 const Home = ({ navigation }) => {
-    const [username, onChangeUsername] = React.useState("");
+    const [username, setUsername] = React.useState("");
+    const [emptyAlert, setEmptyAlert] = React.useState("");
+
+    const startGame = () => {
+        if (username === "") {
+            setEmptyAlert("請輸入暱稱");
+        } else {
+            navigation.navigate("Game", { username: username });
+            setEmptyAlert("");
+            setUsername("");
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -29,15 +40,13 @@ const Home = ({ navigation }) => {
                         <StyleText fontSize={20} color="gold" style={styles.textShadow}>暱稱：</StyleText>
                         <TextInput
                             value={username}
-                            onChangeText={text => onChangeUsername(text)}
+                            onChangeText={(text) => setUsername(text)}
                             style={styles.inputName}
+                            placeholder={emptyAlert}
                         />
                     </View>
                     <View style={{ margin: 5 }}>
-                        <TouchableOpacity onPress={() => {
-                            // TODO: alert if user doesn't enter name
-                            navigation.navigate("Game", { username: username === "" ? "stranger" : username });
-                        }}>
+                        <TouchableOpacity onPress={startGame}>
                             <StyleText fontSize={20} color="gold" style={styles.textShadow}>開始遊戲</StyleText>
                         </TouchableOpacity>
                     </View>

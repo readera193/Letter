@@ -35,7 +35,7 @@ const Rule = () => {
             <Button
                 onPress={() => { setModalVisible(true); }}
                 title="規則說明"
-                color="gold"
+                color="goldenrod"
             />
             <Modal isVisible={isModalVisible} onBackdropPress={closeModal}>
                 <View style={styles.container}>
@@ -70,7 +70,7 @@ const Hint = () => {
             <Button
                 onPress={() => { setModalVisible(true); }}
                 title="提示卡"
-                color="gold"
+                color="goldenrod"
             />
 
             <Modal isVisible={isModalVisible} onBackdropPress={closeModal} style={styles.center}>
