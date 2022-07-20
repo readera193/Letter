@@ -7,12 +7,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { StyleText } from "../component/components";
+import { StyleText, images } from "../component/components";
 
-const images = {
-    background: require("../assets/background.jpg"),
-    logo: require("../assets/logo.png"),
-}
 
 const Home = ({ navigation }) => {
     const [username, setUsername] = React.useState("");
@@ -24,7 +20,6 @@ const Home = ({ navigation }) => {
         } else {
             navigation.navigate("Game", { username: username });
             setEmptyAlert("");
-            setUsername("");
         }
     }
 
@@ -62,7 +57,6 @@ const styles = StyleSheet.create({
     },
     imageBackground: {
         flex: 1,
-        resizeMode: "cover",
         alignItems: "center",
         justifyContent: "space-evenly",
     },
@@ -74,10 +68,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
         textAlignVertical: "center",
         textShadowColor: "black",
-        textShadowOffset: {
-            height: 2,
-            width: 2,
-        },
+        textShadowOffset: { height: 2, width: 2 },
         textShadowRadius: 1,
     },
     inputNameContainer: {
