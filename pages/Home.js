@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Image,
     ImageBackground,
@@ -7,21 +7,28 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { StyleText, images } from "../component/components";
+import { apiJoin } from "../api";
+import { StyleText, images, AlertModal } from "../component/components";
 
 
 const Home = ({ navigation }) => {
-    const [username, setUsername] = React.useState("");
-    const [emptyAlert, setEmptyAlert] = React.useState("");
+    const [username, setUsername] = useState("");
+    const [emptyAlert, setEmptyAlert] = useState("");
+    const [message, setMessage] = useState("");
 
-    const startGame = () => {
-        if (username === "") {
-            setEmptyAlert("請輸入暱稱");
-        } else {
-            navigation.navigate("Game", { username: username });
-            setEmptyAlert("");
+    const startGame = async () => {
+        try {
+            if (username === "") {
+                setEmptyAlert("請輸入暱稱");
+            } else {
+                setEmptyAlert("");
+                await apiJoin({ playerName: username });
+                navigation.navigate("Game", { username: username });
+            }
+        } catch (error) {
+            setMessage(error?.response?.data || error.message);
         }
-    }
+    };
 
     return (
         <View style={styles.container}>
@@ -42,14 +49,19 @@ const Home = ({ navigation }) => {
                     </View>
                     <View style={{ margin: 5 }}>
                         <TouchableOpacity onPress={startGame}>
-                            <StyleText fontSize={20} color="gold" style={styles.textShadow}>開始遊戲</StyleText>
+                            <StyleText fontSize={20} color="gold" style={styles.textShadow}>確定</StyleText>
                         </TouchableOpacity>
                     </View>
                 </View>
             </ImageBackground>
+            <AlertModal
+                show={message !== ""}
+                closeModal={() => setMessage("")}
+                message={message}
+            />
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {

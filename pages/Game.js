@@ -1,18 +1,56 @@
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
+    Button,
     Image,
     ImageBackground,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import Entypo from "react-native-vector-icons/Entypo";
-import { StyleText, Manual, images } from "../component/components";
+import { StyleText, Manual, images, AlertModal } from "../component/components";
+import { baseURL } from "../api";
+
 
 const Game = ({ route }) => {
     const { username } = route.params;
+    const [playerNames, setPlayerNames] = useState([]);
+    const [shields, setShields] = useState([]);
+    const [message, setMessage] = useState("");
+
+    const ws = useRef(new WebSocket("ws://" + baseURL)).current;
+
+    useEffect(() => {
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                action: "join",
+                playerName: username,
+            }));
+        };
+
+        ws.onmessage = ({ data }) => onMessage(data);
+
+        ws.onclose = () => {
+            console.log("Disconnected. Check internet or server.");
+        };
+
+        return () => ws.close();
+    }, []);
+
+    const onMessage = (data) => {
+        let { state, actionPlayer, playerNames = [], shields = [] } = JSON.parse(data);
+        if (state === "join" || state === "exit") {
+            console.log(new Date().toLocaleString("zh-TW", { "hour12": false }), "received:\n", JSON.parse(data));
+            console.log("playerNames, shields", playerNames, shields);
+            setPlayerNames(playerNames.filter((name) => name !== username));
+            setShields(shields);
+        }
+    };
+
+    const startGame = () => {
+        console.log("start");
+    };
 
     return (
         <View style={styles.container}>
@@ -24,52 +62,14 @@ const Game = ({ route }) => {
                     borderColor: "white",
                     flexDirection: "row",
                 }}>
-                    <View style={{
-                        flex: 1
-                    }}>
-                        <Text numberOfLines={2} style={styles.playerName}>{"一二三四五六七八九一二三四五六七八九"}</Text>
-                        <View style={{
-                            flex: 1,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}>
-                            <Entypo
-                                name="triangle-up"
-                                size={40}
-                                color="red"
-                            />
-                        </View>
-                    </View>
-                    <View style={{
-                        flex: 1
-                    }}>
-                        <Text numberOfLines={2} style={styles.playerName}>{"195"}</Text>
-                        <View style={{
-                            flex: 1,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}>
-                            <MaterialCommunityIcons
-                                name="shield-cross"
-                                size={40}
-                                color="green"
-                            />
-                        </View>
-                    </View>
-                    <View style={{
-                        flex: 1
-                    }}>
-                        <Text numberOfLines={2} style={styles.playerName}>{"juliet124456789"}</Text>
-                        <View style={{
-                            flex: 1,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}>
-                        </View>
-                    </View>
+                    {playerNames.map((name) =>
+                        <Player
+                            key={name}
+                            name={name}
+                            shield={shields.includes(name)}
+                            histurn={false}
+                        />
+                    )}
                 </View>
                 <View style={{
                     flex: 2,
@@ -116,29 +116,49 @@ const Game = ({ route }) => {
                     borderWidth: 1,
                     borderColor: "white",
                     flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
                 }}>
-
+                    {playerNames.length > 0 &&
+                        <Button
+                            onPress={startGame}
+                            title="開始遊戲"
+                            color="goldenrod"
+                        />
+                    }
                 </View>
             </ImageBackground>
+            <AlertModal
+                show={message !== ""}
+                closeModal={() => setMessage("")}
+                message={message}
+            />
         </View>
     );
-}
+};
 
-const Player = ({ name, card }) => (
+const Player = ({ name, shield = false, histurn = false }) => (
     <View style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
+        flex: 1
     }}>
-        <Image
-            source={card}
-            resizeMode="contain"
-            style={{
-                flex: 1,
-                aspectRatio: 518 / 708,
-            }}
-        />
         <Text numberOfLines={2} style={styles.playerName}>{name}</Text>
+        <View style={{
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+        }}>
+            {shield && <MaterialCommunityIcons
+                name="shield-cross"
+                size={40}
+                color="green"
+            />}
+            {histurn && <Entypo
+                name="triangle-up"
+                size={40}
+                color="red"
+            />}
+        </View>
     </View>
 );
 

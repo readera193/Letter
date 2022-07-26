@@ -23,7 +23,7 @@ const images = {
         require("../assets/role_7.jpg"),
         require("../assets/role_8.jpg"),
     ],
-}
+};
 
 const StyleText = ({ fontSize, color, fontWeight, style, children }) => (
     <Text style={[{ fontSize: fontSize, color: color, fontWeight: fontWeight }, style]}>
@@ -41,12 +41,12 @@ const Manual = () => (
 const Rule = () => {
     const [isModalVisible, setModalVisible] = useState(false);
 
-    const closeModal = () => { setModalVisible(false); };
+    const closeModal = () => setModalVisible(false);
 
     return (
         <View style={{ marginLeft: 10 }}>
             <Button
-                onPress={() => { setModalVisible(true); }}
+                onPress={() => setModalVisible(true)}
                 title="規則說明"
                 color="goldenrod"
             />
@@ -72,17 +72,17 @@ const Rule = () => {
             </Modal>
         </View>
     );
-}
+};
 
 const Hint = () => {
     const [isModalVisible, setModalVisible] = useState(false);
 
-    const closeModal = () => { setModalVisible(false); };
+    const closeModal = () => setModalVisible(false);
 
     return (
         <View>
             <Button
-                onPress={() => { setModalVisible(true); }}
+                onPress={() => setModalVisible(true)}
                 title="提示卡"
                 color="goldenrod"
             />
@@ -100,7 +100,20 @@ const Hint = () => {
             </Modal>
         </View>
     );
-}
+};
+
+const AlertModal = ({ show, closeModal, message }) => (
+    <Modal isVisible={show} onBackdropPress={closeModal} style={styles.center}>
+        <View style={{ flex: 8 / 10, alignItems: "center", justifyContent: "center" }}>
+            <View style={{ backgroundColor: "white", padding: 10 }} >
+                <StyleText fontSize={20} color="black">{message}</StyleText>
+            </View>
+            <Text style={styles.closeHint} onPress={closeModal}>
+                點擊空白處關閉...
+            </Text>
+        </View>
+    </Modal>
+);
 
 const styles = StyleSheet.create({
     container: {
@@ -129,4 +142,4 @@ const styles = StyleSheet.create({
 
 
 
-export { StyleText, Manual, images };
+export { StyleText, Manual, AlertModal, images };
