@@ -5,6 +5,7 @@
   "scripts": {
     "start": "react-native start",
     "android": "react-native run-android",
+    "reverse": "adb devices | grep -v devices | grep device | cut -f 1 | xargs -t -i adb -s {} reverse tcp:8081 tcp:8081",
     "test": "jest",
     "lint": "eslint ."
   },

@@ -15,8 +15,7 @@ import { baseURL } from "../api";
 
 const Game = ({ route }) => {
     const { username } = route.params;
-    const [playerNames, setPlayerNames] = useState([]);
-    const [shields, setShields] = useState([]);
+    const [playerState, setPlayerState] = useState({});
     const [message, setMessage] = useState("");
 
     const ws = useRef(new WebSocket("ws://" + baseURL)).current;
@@ -39,17 +38,22 @@ const Game = ({ route }) => {
     }, []);
 
     const onMessage = (data) => {
-        let { state, actionPlayer, playerNames = [], shields = [] } = JSON.parse(data);
-        if (state === "join" || state === "exit") {
-            console.log(new Date().toLocaleString("zh-TW", { "hour12": false }), "received:\n", JSON.parse(data));
-            console.log("playerNames, shields", playerNames, shields);
-            setPlayerNames(playerNames.filter((name) => name !== username));
-            setShields(shields);
+        console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));
+
+        let { type, actionPlayer, playerState = {}, msg = "", } = JSON.parse(data);
+        if (type === "update") {
+            console.log("object", playerState);
+            delete playerState[username];
+            setPlayerState(playerState);
+        } else if (type === "error") {
+            setMessage(msg);
+        } else {
+            console.log("unknown type");
         }
     };
 
     const startGame = () => {
-        console.log("start");
+        ws.send(JSON.stringify({ action: "start" }));
     };
 
     return (
@@ -62,14 +66,14 @@ const Game = ({ route }) => {
                     borderColor: "white",
                     flexDirection: "row",
                 }}>
-                    {playerNames.map((name) =>
+                    {Object.entries(playerState).map(([name, { shield = false, gameover = false, action = false }]) =>
                         <Player
                             key={name}
                             name={name}
-                            shield={shields.includes(name)}
-                            histurn={false}
-                        />
-                    )}
+                            shield={shield}
+                            gameover={gameover}
+                            action={action}
+                        />)}
                 </View>
                 <View style={{
                     flex: 2,
@@ -119,12 +123,16 @@ const Game = ({ route }) => {
                     alignItems: "center",
                     justifyContent: "center",
                 }}>
-                    {playerNames.length > 0 &&
+                    {Object.keys(playerState).length > 0 ?
                         <Button
                             onPress={startGame}
                             title="開始遊戲"
                             color="goldenrod"
                         />
+                        :
+                        <StyleText fontSize={30} color="gold">
+                            等待其他玩家加入
+                        </StyleText>
                     }
                 </View>
             </ImageBackground>
@@ -137,28 +145,30 @@ const Game = ({ route }) => {
     );
 };
 
-const Player = ({ name, shield = false, histurn = false }) => (
+const Player = ({ name, shield = false, gameover = false, action = false }) => (
     <View style={{
-        flex: 1
+        flex: 1,
+        borderWidth: 1,
+        borderColor: "white",
+        alignItems: "center",
+        justifyContent: "center",
     }}>
         <Text numberOfLines={2} style={styles.playerName}>{name}</Text>
-        <View style={{
-            flex: 1,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-        }}>
-            {shield && <MaterialCommunityIcons
-                name="shield-cross"
-                size={40}
-                color="green"
-            />}
-            {histurn && <Entypo
-                name="triangle-up"
-                size={40}
-                color="red"
-            />}
-        </View>
+        {shield && <MaterialCommunityIcons
+            name="shield-cross"
+            size={40}
+            color="green"
+        />}
+        {action && <Entypo
+            name="triangle-up"
+            size={40}
+            color="red"
+        />}
+        {gameover && <MaterialCommunityIcons
+            name="heart-broken"
+            size={40}
+            color="red"
+        />}
     </View>
 );
 
