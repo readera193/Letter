@@ -66,6 +66,7 @@ const Game = ({ route }) => {
                     borderColor: "white",
                     flexDirection: "row",
                 }}>
+                    {/* 順序問題：Player 須按照行動順序排列 */}
                     {Object.entries(playerState).map(([name, { shield = false, gameover = false, action = false }]) =>
                         <Player
                             key={name}

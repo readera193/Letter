@@ -14,14 +14,14 @@ const images = {
     cardHelping: require("../assets/card_helping.jpg"),
     roles: [
         undefined,
-        require("../assets/role_1.jpg"),
-        require("../assets/role_2.jpg"),
-        require("../assets/role_3.jpg"),
-        require("../assets/role_4.jpg"),
-        require("../assets/role_5.jpg"),
-        require("../assets/role_6.jpg"),
-        require("../assets/role_7.jpg"),
-        require("../assets/role_8.jpg"),
+        require("../assets/role_1.png"),
+        require("../assets/role_2.png"),
+        require("../assets/role_3.png"),
+        require("../assets/role_4.png"),
+        require("../assets/role_5.png"),
+        require("../assets/role_6.png"),
+        require("../assets/role_7.png"),
+        require("../assets/role_8.png"),
     ],
 };
 
