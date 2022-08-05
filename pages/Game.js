@@ -1,10 +1,11 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import {
     Button,
     Image,
     ImageBackground,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -15,18 +16,21 @@ import { baseURL } from "../api";
 
 const Game = ({ route }) => {
     const { username } = route.params;
+    const [state, setState] = useState("");
+    const [actionPlayer, setActionPlayer] = useState("");
     const [playerState, setPlayerState] = useState({});
+    const [actionSequence, setActionSequence] = useState([]);
+    const [cards, setCards] = useState([]);
     const [message, setMessage] = useState("");
+    const [cardIndexSelected, setCardIndexSelected] = useState(-1); // use inedex to prevent same card
+    const [usedCards, setUsedCards] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     const ws = useRef(new WebSocket("ws://" + baseURL)).current;
 
+    const send = (data) => ws.send(JSON.stringify(data));
+
     useEffect(() => {
-        ws.onopen = () => {
-            ws.send(JSON.stringify({
-                action: "join",
-                playerName: username,
-            }));
-        };
+        ws.onopen = () => send({ action: "join", playerName: username });
 
         ws.onmessage = ({ data }) => onMessage(data);
 
@@ -40,11 +44,20 @@ const Game = ({ route }) => {
     const onMessage = (data) => {
         console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));
 
-        let { type, actionPlayer, playerState = {}, msg = "", } = JSON.parse(data);
+        let {
+            type, state, actionPlayer, actionSequence,
+            cards = [], playerState = {}, msg = "",
+            usedCards = [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        } = JSON.parse(data);
+
         if (type === "update") {
-            console.log("object", playerState);
-            delete playerState[username];
+            setState(state);
+            setActionPlayer(actionPlayer);
             setPlayerState(playerState);
+            setActionSequence(actionSequence.filter((name) => name !== username));
+            setUsedCards(usedCards);
+        } else if (type === "deal") {
+            setCards(cards);
         } else if (type === "error") {
             setMessage(msg);
         } else {
@@ -52,9 +65,84 @@ const Game = ({ route }) => {
         }
     };
 
-    const startGame = () => {
-        ws.send(JSON.stringify({ action: "start" }));
-    };
+
+    const playerArea = useMemo(() => {
+        if (state === "waiting") {
+            if (actionSequence.length > 0) {
+                return (
+                    <Button
+                        onPress={() => send({ action: "start" })}
+                        title="開始遊戲"
+                        color="goldenrod"
+                    />
+                );
+            } else {
+                return (
+                    <StyleText fontSize={30} color="gold">
+                        等待其他玩家加入
+                    </StyleText>
+                );
+            }
+        } else {
+            return (
+                <View style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}>
+                    <View style={{
+                        flex: 1,
+                        flexDirection: "row",
+                        justifyContent: "space-evenly",
+                        alignItems: "center",
+                    }}>
+
+                        {cards.map((card, index) =>
+                            <TouchableOpacity
+                                key={index}
+                                onPress={() => setCardIndexSelected(index)}
+                                // cardIndexSelected use index to prevent get 2 same card
+                                style={(cardIndexSelected === index) ? { borderWidth: 2, borderColor: "gold" } : {}}
+                                disabled={cards.length <= 1}
+                            >
+                                <Image
+                                    source={images.roles[card]}
+                                    resizeMode="contain"
+                                    style={{
+                                        flex: 1,
+                                        aspectRatio: 210 / 293,
+                                        margin: 5,
+                                    }}
+                                />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                    {(actionPlayer === username) &&
+                        <View style={{ margin: 20 }}>
+                            {(cards.length <= 1) ?
+                                <Button
+                                    onPress={() => send({ action: "draw" })}
+                                    title="抽牌"
+                                    color="goldenrod"
+                                />
+                                :
+                                <Button
+                                    onPress={() => {
+                                        send({ action: "play", playedCard: cards[cardIndexSelected] });
+                                        setCardIndexSelected(-1);
+                                    }}
+                                    title="確定"
+                                    color="goldenrod"
+                                    disabled={cardIndexSelected === -1}
+                                />
+                            }
+                        </View>
+                    }
+                </View>
+            );
+        }
+    }, [state, actionSequence, actionPlayer, username, cards, cardIndexSelected]);
 
     return (
         <View style={styles.container}>
@@ -66,15 +154,18 @@ const Game = ({ route }) => {
                     borderColor: "white",
                     flexDirection: "row",
                 }}>
-                    {/* 順序問題：Player 須按照行動順序排列 */}
-                    {Object.entries(playerState).map(([name, { shield = false, gameover = false, action = false }]) =>
-                        <Player
-                            key={name}
-                            name={name}
-                            shield={shield}
-                            gameover={gameover}
-                            action={action}
-                        />)}
+                    {actionSequence.map((name) => {
+                        let { shield = false, gameover = false, action = false } = playerState[name] ?? {};
+                        return (
+                            <Player
+                                key={name}
+                                name={name}
+                                shield={shield}
+                                gameover={gameover}
+                                action={action}
+                            />
+                        );
+                    })}
                 </View>
                 <View style={{
                     flex: 2,
@@ -104,14 +195,14 @@ const Game = ({ route }) => {
                         </Text>
                         {/* card left 0 alert with red text */}
                         <Text>
-                            ({0}/1){"\n"}
-                            ({0}/1){"\n"}
-                            ({0}/1){"\n"}
-                            ({0}/2){"\n"}
-                            ({0}/2){"\n"}
-                            ({0}/2){"\n"}
-                            ({0}/2){"\n"}
-                            ({0}/5)
+                            ({usedCards[8]}/1){"\n"}
+                            ({usedCards[7]}/1){"\n"}
+                            ({usedCards[6]}/1){"\n"}
+                            ({usedCards[5]}/2){"\n"}
+                            ({usedCards[4]}/2){"\n"}
+                            ({usedCards[3]}/2){"\n"}
+                            ({usedCards[2]}/2){"\n"}
+                            ({usedCards[1]}/5)
                         </Text>
                     </View>
 
@@ -120,21 +211,13 @@ const Game = ({ route }) => {
                     flex: 2,
                     borderWidth: 1,
                     borderColor: "white",
-                    flexDirection: "row",
+                    flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "center",
+                    justifyContent: "flex-start",
                 }}>
-                    {Object.keys(playerState).length > 0 ?
-                        <Button
-                            onPress={startGame}
-                            title="開始遊戲"
-                            color="goldenrod"
-                        />
-                        :
-                        <StyleText fontSize={30} color="gold">
-                            等待其他玩家加入
-                        </StyleText>
-                    }
+                    <Text numberOfLines={2} style={[styles.playerName, { fontSize: 30 }]} >{username}</Text>
+                    {playerArea}
+                    {/* Button: 催促按鈕 */}
                 </View>
             </ImageBackground>
             <AlertModal
