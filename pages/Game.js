@@ -19,6 +19,7 @@ const Game = ({ route }) => {
     const [state, setState] = useState("");
     const [actionPlayer, setActionPlayer] = useState("");
     const [playerState, setPlayerState] = useState({});
+    const [playerNames, setPlayerNames] = useState([]);
     const [actionSequence, setActionSequence] = useState([]);
     const [cards, setCards] = useState([]);
     const [message, setMessage] = useState("");
@@ -45,7 +46,7 @@ const Game = ({ route }) => {
         console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));
 
         let {
-            type, state, actionPlayer, actionSequence,
+            type, state, actionPlayer, actionSequence, playerNames,
             cards = [], playerState = {}, msg = "",
             usedCards = [0, 0, 0, 0, 0, 0, 0, 0, 0],
         } = JSON.parse(data);
@@ -54,7 +55,8 @@ const Game = ({ route }) => {
             setState(state);
             setActionPlayer(actionPlayer);
             setPlayerState(playerState);
-            setActionSequence(actionSequence.filter((name) => name !== username));
+            setPlayerNames(playerNames.filter((name) => name !== username));
+            setActionSequence(actionSequence);
             setUsedCards(usedCards);
         } else if (type === "deal") {
             setCards(cards);
@@ -68,7 +70,7 @@ const Game = ({ route }) => {
 
     const playerArea = useMemo(() => {
         if (state === "waiting") {
-            if (actionSequence.length > 0) {
+            if (playerNames.length > 0) {
                 return (
                     <Button
                         onPress={() => send({ action: "start" })}
@@ -142,7 +144,7 @@ const Game = ({ route }) => {
                 </View>
             );
         }
-    }, [state, actionSequence, actionPlayer, username, cards, cardIndexSelected]);
+    }, [state, playerNames, actionPlayer, username, cards, cardIndexSelected]);
 
     return (
         <View style={styles.container}>
@@ -154,18 +156,15 @@ const Game = ({ route }) => {
                     borderColor: "white",
                     flexDirection: "row",
                 }}>
-                    {actionSequence.map((name) => {
-                        let { shield = false, gameover = false, action = false } = playerState[name] ?? {};
-                        return (
-                            <Player
-                                key={name}
-                                name={name}
-                                shield={shield}
-                                gameover={gameover}
-                                action={action}
-                            />
-                        );
-                    })}
+                    {playerNames.map((name) =>
+                        <Player
+                            key={name}
+                            name={name}
+                            shield={playerState[name]?.shield}
+                            eliminated={state === "inGame" && actionPlayer !== name && !actionSequence.includes(name)}
+                            action={actionPlayer === name}
+                        />
+                    )}
                 </View>
                 <View style={{
                     flex: 2,
@@ -229,7 +228,7 @@ const Game = ({ route }) => {
     );
 };
 
-const Player = ({ name, shield = false, gameover = false, action = false }) => (
+const Player = ({ name, shield = false, eliminated = false, action = false }) => (
     <View style={{
         flex: 1,
         borderWidth: 1,
@@ -248,7 +247,7 @@ const Player = ({ name, shield = false, gameover = false, action = false }) => (
             size={40}
             color="red"
         />}
-        {gameover && <MaterialCommunityIcons
+        {eliminated && <MaterialCommunityIcons
             name="heart-broken"
             size={40}
             color="red"
