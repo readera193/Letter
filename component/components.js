@@ -32,9 +32,11 @@ const StyleText = ({ fontSize, color, fontWeight, style, children }) => (
 );
 
 const Manual = () => (
-    <View style={{ flexDirection: "row", justifyContent: "flex-end", padding: 10, }}>
-        <Hint />
-        <Rule />
+    <View style={{ flexDirection: "row" }}>
+        <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", padding: 5 }}>
+            <Hint />
+            <Rule />
+        </View>
     </View>
 );
 
@@ -64,6 +66,10 @@ const Rule = () => {
                     <View style={{ flexDirection: "row" }}>
                         <Text>{"\t\t"}三、</Text>
                         <Text numberOfLines={2}>若抽完牌庫，且剩餘兩位以上玩家，則手牌最大者獲勝。</Text>
+                    </View>
+                    <View style={{ flexDirection: "row" }}>
+                        <Text style={{ textDecorationLine: "line-through" }}>{"\t\t"}四、</Text>
+                        <Text style={{ textDecorationLine: "line-through" }} numberOfLines={2}>伯爵夫人改成皇后，卡牌剩餘數量那邊比較方便排版......</Text>
                     </View>
                 </View>
                 <Text style={styles.closeHint} onPress={closeModal}>
