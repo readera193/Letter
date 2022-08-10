@@ -27,6 +27,7 @@ const Game = ({ route }) => {
     const [usedCards, setUsedCards] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
     const [record, setRecord] = useState("");
 
+    const scrollViewRef = useRef();
     const ws = useRef(new WebSocket("ws://" + baseURL)).current;
 
     const send = (data) => ws.send(JSON.stringify(data));
@@ -48,22 +49,24 @@ const Game = ({ route }) => {
 
         let {
             type, state, actionPlayer, playerNames,
-            cards = [], playerState = {}, msg = "",
+            cards = [], playerState = {}, msg,
             usedCards = [0, 0, 0, 0, 0, 0, 0, 0, 0],
         } = JSON.parse(data);
-
-        if (state === "gameOver") {
-            setMessage("本輪獲勝者是：" + actionPlayer);
-        } else if (state === "inGame") {
-            setMessage("");
-        }
 
         if (type === "update") {
             setState(state);
             setActionPlayer(actionPlayer);
-            setPlayerState(playerState);
             setPlayerNames(playerNames.filter((name) => name !== username));
+            setCards(cards);
+            setPlayerState(playerState);
             setUsedCards(usedCards);
+            if (msg) {
+                setRecord((oldRecord) => oldRecord + msg + "\n");
+                scrollViewRef.current.scrollToEnd();
+            }
+        } else if (type === "start") {
+            setRecord("");
+            setMessage("");
         } else if (type === "deal") {
             setCards(cards);
         } else if (type === "error") {
@@ -75,7 +78,7 @@ const Game = ({ route }) => {
 
 
     const playerArea = useMemo(() => {
-        if (state === "waiting" || state === "gameOver") {
+        if (state === "waiting") {
             if (playerNames.length > 0) {
                 return (
                     <Button
@@ -168,9 +171,8 @@ const Game = ({ route }) => {
                     <View style={{ flex: 1, padding: 5, }}>
                         <Text style={{ textAlign: "center", textAlignVertical: "center", paddingBottom: 5, }}>遊戲紀錄：</Text>
                         <View style={styles.record}>
-                            <ScrollView>
+                            <ScrollView ref={scrollViewRef}>
                                 <Text>{record}</Text>
-                                <Text>玩家 juliet123456789 打出衛兵，猜測 reader987654321 的手牌是男爵...正確，reader987654321 出局</Text>
                             </ScrollView>
                         </View>
                     </View>
