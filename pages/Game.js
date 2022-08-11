@@ -26,6 +26,8 @@ const Game = ({ route }) => {
     const [cardIndexSelected, setCardIndexSelected] = useState(-1); // use inedex to prevent same card
     const [usedCards, setUsedCards] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
     const [record, setRecord] = useState("");
+    const [cardPoolRemaining, setCardPoolRemaining] = useState(0);
+    const [unknownCards, setUnknownCards] = useState(0);
 
     const scrollViewRef = useRef();
     const ws = useRef(new WebSocket("ws://" + baseURL)).current;
@@ -48,7 +50,7 @@ const Game = ({ route }) => {
         console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));
 
         let {
-            type, state, actionPlayer, playerNames,
+            type, state, actionPlayer, playerNames, cardPoolRemaining,
             cards = [], playerState = {}, msg,
             usedCards = [0, 0, 0, 0, 0, 0, 0, 0, 0],
         } = JSON.parse(data);
@@ -57,6 +59,7 @@ const Game = ({ route }) => {
             setState(state);
             setActionPlayer(actionPlayer);
             setPlayerNames(playerNames.filter((name) => name !== username));
+            setCardPoolRemaining(cardPoolRemaining);
             setCards(cards);
             setPlayerState(playerState);
             setUsedCards(usedCards);
@@ -157,8 +160,8 @@ const Game = ({ route }) => {
                 </View>
                 <View style={styles.infoArea}>
                     <View style={{ padding: 5, alignItems: "center", justifyContent: "space-evenly", }}>
-                        <Text>牌庫：{16}</Text>
-                        <Text>未知的角色牌：{2}</Text>
+                        <Text>牌庫：{cardPoolRemaining}</Text>
+                        <Text>未知的角色牌：{unknownCards}</Text>
                         <Text style={usedCards[8] === 1 ? { color: "red" } : {}}>公主(8)：( {usedCards[8]} / 1 )</Text>
                         <Text style={usedCards[7] === 1 ? { color: "red" } : {}}>皇后(7)：( {usedCards[7]} / 1 )</Text>
                         <Text style={usedCards[6] === 1 ? { color: "red" } : {}}>國王(6)：( {usedCards[6]} / 1 )</Text>
@@ -201,8 +204,7 @@ const Player = ({ name, shield = false, eliminated = false, action = false }) =>
         {eliminated ? <MaterialCommunityIcons name="heart-broken" size={40} color="red" />
             : action ? <Entypo name="triangle-up" size={40} color="red" />
                 : shield ? <MaterialCommunityIcons name="shield-cross" size={40} color="green" />
-                    : <Entypo name="triangle-up" size={40} color="transparent" />
-        }
+                    : <Entypo name="triangle-up" size={40} color="transparent" />}
     </View>
 );
 
