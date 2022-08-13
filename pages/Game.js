@@ -48,18 +48,18 @@ const Game = ({ route }) => {
     const [guessCard, setGuessCard] = useState(0);
 
     const scrollViewRef = useRef();
-    const ws = useRef(new WebSocket("ws://" + baseURL)).current;
+    const ws = useRef();
 
     useEffect(() => {
-        ws.onopen = () => send({ action: "join", playerName: username });
+        ws.current = new WebSocket(`ws://${baseURL}?playerName=${username}`);
 
-        ws.onmessage = ({ data }) => onMessage(data);
+        ws.current.onmessage = ({ data }) => onMessage(data);
 
-        ws.onclose = () => {
+        ws.current.onclose = () => {
             console.log("Disconnected. Check internet or server.");
         };
 
-        return () => ws.close();
+        return () => ws.current.close();
     }, []);
 
     useEffect(() => {
@@ -70,7 +70,7 @@ const Game = ({ route }) => {
         }
     }, [cardIndexSelected]);
 
-    const send = (data) => ws.send(JSON.stringify(data));
+    const send = (data) => ws.current.send(JSON.stringify(data));
 
     const onMessage = (data) => {
         console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));

@@ -1,9 +1,9 @@
 import axios from "axios";
 
-export const baseURL = "https://dashboard.heroku.com/apps/letter-backend";
+export const baseURL = "letter-backend.herokuapp.com";
 
 const request = axios.create({
-    baseURL: "http://" + baseURL,
+    baseURL: "https://" + baseURL,
     timeout: 5000,
 });
 
