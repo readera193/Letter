@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const baseURL = "192.168.0.195:1956";
+export const baseURL = "https://dashboard.heroku.com/apps/letter-backend";
 
 const request = axios.create({
     baseURL: "http://" + baseURL,

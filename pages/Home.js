@@ -8,7 +8,7 @@ import {
     View,
 } from "react-native";
 import { apiJoin } from "../api";
-import { StyleText, images, AlertModal } from "../component/components";
+import { StyleText, images, CommonModal } from "../component/components";
 
 
 const Home = ({ navigation }) => {
@@ -54,11 +54,9 @@ const Home = ({ navigation }) => {
                     </View>
                 </View>
             </ImageBackground>
-            <AlertModal
-                show={message !== ""}
-                closeModal={() => setMessage("")}
-                message={message}
-            />
+            <CommonModal show={message !== ""} closeModal={() => setMessage("")}>
+                <StyleText fontSize={20} color="black">{message}</StyleText>
+            </CommonModal>
         </View>
     );
 };

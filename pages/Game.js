@@ -11,9 +11,23 @@ import {
 } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import Entypo from "react-native-vector-icons/Entypo";
-import { StyleText, Manual, images, AlertModal } from "../component/components";
+import { Picker } from "@react-native-picker/picker";
+import { StyleText, Manual, images, CommonModal } from "../component/components";
 import { baseURL } from "../api";
 
+
+const pickerText = {
+    1: "選擇要猜測手牌的玩家，不可猜測對方手牌為衛兵",
+    2: "選擇要看手牌的玩家",
+    3: "選擇要比較手牌大小的玩家，若平手無事發生",
+    5: "指定要棄牌重抽的玩家，可以是你自己",
+    6: "選擇要交換手牌的玩家",
+};
+
+const cardText = {
+    1: "衛兵", 2: "神父", 3: "男爵", 4: "侍女",
+    5: "王子", 6: "國王", 7: "皇后", 8: "公主",
+};
 
 const Game = ({ route }) => {
     const { username } = route.params;
@@ -28,11 +42,13 @@ const Game = ({ route }) => {
     const [record, setRecord] = useState("");
     const [cardPoolRemaining, setCardPoolRemaining] = useState(0);
     const [unknownCards, setUnknownCards] = useState(0);
+    const [showPlayerSelector, setShowPlayerSelector] = useState(false);
+    const [playerOptions, setPlayerOptions] = useState([]);
+    const [selectedPlayer, setSelectedPlayer] = useState("");
+    const [guessCard, setGuessCard] = useState(0);
 
     const scrollViewRef = useRef();
     const ws = useRef(new WebSocket("ws://" + baseURL)).current;
-
-    const send = (data) => ws.send(JSON.stringify(data));
 
     useEffect(() => {
         ws.onopen = () => send({ action: "join", playerName: username });
@@ -45,6 +61,16 @@ const Game = ({ route }) => {
 
         return () => ws.close();
     }, []);
+
+    useEffect(() => {
+        if ([1, 2, 5].includes(cards[cardIndexSelected])) {
+            setPlayerOptions([username, ...playerNames]);
+        } else if ([3, 6].includes(cards[cardIndexSelected])) {
+            setPlayerOptions([...playerNames]);
+        }
+    }, [cardIndexSelected]);
+
+    const send = (data) => ws.send(JSON.stringify(data));
 
     const onMessage = (data) => {
         console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));
@@ -72,6 +98,9 @@ const Game = ({ route }) => {
             setMessage("");
         } else if (type === "deal") {
             setCards(cards);
+        } else if (type === "baron") {
+            setRecord((oldRecord) => oldRecord + msg + "\n");
+            scrollViewRef.current.scrollToEnd();
         } else if (type === "error") {
             setMessage(msg);
         } else {
@@ -79,6 +108,29 @@ const Game = ({ route }) => {
         }
     };
 
+    const enter = () => {
+        let selectedCard = cards[cardIndexSelected];
+        if ([5, 6].includes(selectedCard) && cards.includes(7)) {
+            setMessage(`你手上有${cardText[selectedCard]}，必須棄掉皇后(伯爵夫人)`)
+        } else if ([1, 2, 3, 5, 6].includes(selectedCard)) {
+            setShowPlayerSelector(true);
+        } else {
+            play();
+        }
+    }
+
+    const play = () => {
+        setShowPlayerSelector(false);
+        send({
+            action: "play",
+            playedCard: cards[cardIndexSelected],
+            selectedPlayer: selectedPlayer,
+            guessCard: guessCard,
+        });
+        setCardIndexSelected(-1);
+        setSelectedPlayer("");
+        setGuessCard(0);
+    };
 
     const playerArea = useMemo(() => {
         if (state === "waiting") {
@@ -106,7 +158,7 @@ const Game = ({ route }) => {
                                 key={index}
                                 onPress={() => setCardIndexSelected(index)}
                                 // cardIndexSelected use index to prevent get 2 same card
-                                style={(cardIndexSelected === index) ? styles.selectedCard : {}}
+                                style={(cardIndexSelected === index) ? styles.guessCard : {}}
                                 disabled={cards.length <= 1}
                             >
                                 <Image
@@ -127,10 +179,7 @@ const Game = ({ route }) => {
                                 />
                                 :
                                 <Button
-                                    onPress={() => {
-                                        send({ action: "play", playedCard: cards[cardIndexSelected] });
-                                        setCardIndexSelected(-1);
-                                    }}
+                                    onPress={enter}
                                     title="確定"
                                     color="goldenrod"
                                     disabled={cardIndexSelected === -1}
@@ -189,11 +238,47 @@ const Game = ({ route }) => {
                     </View>
                 </View>
             </ImageBackground>
-            <AlertModal
-                show={message !== ""}
-                closeModal={() => setMessage("")}
-                message={message}
-            />
+            <CommonModal show={message !== ""} closeModal={() => setMessage("")}>
+                <StyleText fontSize={20} color="black">{message}</StyleText>
+            </CommonModal>
+            <CommonModal show={showPlayerSelector} closeModal={() => setShowPlayerSelector(false)}>
+                <StyleText fontSize={15} color="black">{pickerText[cards[cardIndexSelected]]}</StyleText>
+                <View style={{ alignItems: "center", justifyContent: "center", marginVertical: 5 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                        <View style={styles.picker}>
+                            <Picker
+                                selectedValue={selectedPlayer}
+                                style={{ flex: 1 }}
+                                onValueChange={(value) => setSelectedPlayer(value)}
+                            >
+                                <Picker.Item label="請選擇一位玩家" value="" enabled={false} />
+                                {playerOptions.map((name) => <Picker.Item key={name} label={name} value={name} />)}
+                            </Picker>
+                        </View>
+                    </View>
+                    {cards[cardIndexSelected] === 1 &&
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                            <View style={styles.picker}>
+                                <Picker
+                                    selectedValue={guessCard}
+                                    style={{ flex: 1 }}
+                                    onValueChange={(value) => setGuessCard(value)}
+                                >
+                                    <Picker.Item label="猜測他的手牌" value={0} enabled={false} />
+                                    {[2, 3, 4, 5, 6, 7, 8].map((card) =>
+                                        <Picker.Item key={card} label={card + " - " + cardText[card]} value={card} />)}
+                                </Picker>
+                            </View>
+                        </View>
+                    }
+                </View>
+                <Button
+                    onPress={play}
+                    title="確定"
+                    color="goldenrod"
+                    disabled={(selectedPlayer === "" || (cards[cardIndexSelected] === 1 && guessCard === 0))}
+                />
+            </CommonModal>
         </View>
     );
 };
@@ -260,7 +345,7 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         borderRadius: 10,
     },
-    selectedCard: {
+    guessCard: {
         borderWidth: 2,
         borderRadius: 10,
         borderColor: "red",
@@ -270,6 +355,16 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
+    },
+    picker: {
+        flex: 8 / 10,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "white",
+        borderRadius: 2,
+        borderWidth: 1,
+        height: 35,
+        marginVertical: 5,
     },
 });
 

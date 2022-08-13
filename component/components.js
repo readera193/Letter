@@ -53,7 +53,7 @@ const Rule = () => {
                 color="goldenrod"
             />
             <Modal isVisible={isModalVisible} onBackdropPress={closeModal}>
-                <View style={styles.container}>
+                <View style={styles.ruleContainer}>
                     <Text>
                         遊戲初始設置：每位玩家一人一張角色卡{"\n\n"}
                         回合流程：{"\n"}
@@ -108,24 +108,29 @@ const Hint = () => {
     );
 };
 
-const AlertModal = ({ show, closeModal, message }) => (
+const CommonModal = ({ show, closeModal, children }) => (
     <Modal isVisible={show} onBackdropPress={closeModal} style={styles.center}>
-        <View style={{ flex: 8 / 10, alignItems: "center", justifyContent: "center" }}>
-            <View style={{ backgroundColor: "white", padding: 10 }} >
-                <StyleText fontSize={20} color="black">{message}</StyleText>
-            </View>
-            <Text style={styles.closeHint} onPress={closeModal}>
-                點擊空白處關閉...
-            </Text>
+        <View style={styles.commonModalContainer} >
+            {children}
         </View>
+        <Text style={styles.closeHint} onPress={closeModal}>
+            點擊空白處關閉...
+        </Text>
     </Modal>
 );
 
 const styles = StyleSheet.create({
-    container: {
+    ruleContainer: {
         backgroundColor: "white",
         borderRadius: 20,
         padding: 20,
+    },
+    commonModalContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "white",
+        borderRadius: 10,
+        padding: 15,
     },
     cardHelping: {
         flex: 1,
@@ -147,5 +152,4 @@ const styles = StyleSheet.create({
 });
 
 
-
-export { StyleText, Manual, AlertModal, images };
+export { StyleText, Manual, CommonModal, images };
