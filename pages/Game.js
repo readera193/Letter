@@ -33,7 +33,7 @@ const Game = ({ route }) => {
     const { username } = route.params;
     const [state, setState] = useState("");
     const [actionPlayer, setActionPlayer] = useState("");
-    const [playerState, setPlayerState] = useState({});
+    const [publicState, setPublicState] = useState({});
     const [playerNames, setPlayerNames] = useState([]);
     const [cards, setCards] = useState([]);
     const [message, setMessage] = useState("");
@@ -62,23 +62,14 @@ const Game = ({ route }) => {
         return () => ws.current.close();
     }, []);
 
-    useEffect(() => {
-        if ([1, 2, 5].includes(cards[cardIndexSelected])) {
-            setPlayerOptions([username, ...playerNames]);
-        } else if ([3, 6].includes(cards[cardIndexSelected])) {
-            setPlayerOptions([...playerNames]);
-        }
-    }, [cardIndexSelected]);
-
     const send = (data) => ws.current.send(JSON.stringify(data));
 
     const onMessage = (data) => {
         console.log(new Date().toLocaleTimeString(), username, "received:\n", JSON.parse(data));
 
         let {
-            type, state, actionPlayer, playerNames, cardPoolRemaining,
-            cards = [], playerState = {}, msg,
-            usedCards = [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            type, state, actionPlayer, playerNames, cardPoolRemaining, unknownCards, msg,
+            cards = [], publicState = {}, usedCards = [0, 0, 0, 0, 0, 0, 0, 0, 0],
         } = JSON.parse(data);
 
         if (type === "update") {
@@ -87,20 +78,21 @@ const Game = ({ route }) => {
             setPlayerNames(playerNames.filter((name) => name !== username));
             setCardPoolRemaining(cardPoolRemaining);
             setCards(cards);
-            setPlayerState(playerState);
+            setUnknownCards(unknownCards);
+            setPublicState(publicState);
             setUsedCards(usedCards);
             if (msg) {
-                setRecord((oldRecord) => oldRecord + msg + "\n");
+                setRecord((oldRecord) => oldRecord + msg + "\n\n");
                 scrollViewRef.current.scrollToEnd();
             }
         } else if (type === "start") {
-            setRecord("");
+            if (record.length > 100) {
+                setRecord("");
+            }
             setMessage("");
         } else if (type === "deal") {
             setCards(cards);
-        } else if (type === "baron") {
-            setRecord((oldRecord) => oldRecord + msg + "\n");
-            scrollViewRef.current.scrollToEnd();
+            setCardPoolRemaining(cardPoolRemaining);
         } else if (type === "error") {
             setMessage(msg);
         } else {
@@ -113,11 +105,23 @@ const Game = ({ route }) => {
         if ([5, 6].includes(selectedCard) && cards.includes(7)) {
             setMessage(`你手上有${cardText[selectedCard]}，必須棄掉皇后(伯爵夫人)`)
         } else if ([1, 2, 3, 5, 6].includes(selectedCard)) {
-            setShowPlayerSelector(true);
+            let targetPlayers = playerNames.filter((name) => !publicState[name].shield);
+            if (selectedCard === 5) {
+                targetPlayers.push(username);
+                setPlayerOptions(targetPlayers);
+                setShowPlayerSelector(true);
+            } else if (targetPlayers.length > 0) {
+                setPlayerOptions(targetPlayers);
+                setShowPlayerSelector(true);
+            } else {
+                // all players are protected by 4
+                setSelectedPlayer("");
+                play();
+            }
         } else {
             play();
         }
-    }
+    };
 
     const play = () => {
         setShowPlayerSelector(false);
@@ -201,8 +205,8 @@ const Game = ({ route }) => {
                         <Player
                             key={name}
                             name={name}
-                            shield={playerState[name]?.shield}
-                            eliminated={playerState[name]?.eliminated}
+                            shield={publicState[name]?.shield}
+                            eliminated={publicState[name]?.eliminated}
                             action={actionPlayer === name}
                         />
                     )}
@@ -284,7 +288,7 @@ const Game = ({ route }) => {
 };
 
 const Player = ({ name, shield = false, eliminated = false, action = false }) => (
-    <View style={styles.playerState}>
+    <View style={styles.publicState}>
         <Text numberOfLines={2} style={styles.playerNameText}>{name}</Text>
         {eliminated ? <MaterialCommunityIcons name="heart-broken" size={40} color="red" />
             : action ? <Entypo name="triangle-up" size={40} color="red" />
@@ -317,7 +321,7 @@ const styles = StyleSheet.create({
         height: 35,
         marginHorizontal: 5,
     },
-    playerState: {
+    publicState: {
         alignItems: "center",
         justifyContent: "center",
         marginHorizontal: 10,
