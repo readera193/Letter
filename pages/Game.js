@@ -29,23 +29,25 @@ const cardText = {
     5: "王子", 6: "國王", 7: "皇后", 8: "公主",
 };
 
-const Game = ({ route }) => {
+const Game = ({ route, navigation }) => {
     const { username } = route.params;
-    const [state, setState] = useState("");
     const [actionPlayer, setActionPlayer] = useState("");
-    const [publicState, setPublicState] = useState({});
-    const [playerNames, setPlayerNames] = useState([]);
-    const [cards, setCards] = useState([]);
-    const [message, setMessage] = useState("");
     const [cardIndexSelected, setCardIndexSelected] = useState(-1); // use inedex to prevent same card
-    const [usedCards, setUsedCards] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
-    const [record, setRecord] = useState("");
     const [cardPoolRemaining, setCardPoolRemaining] = useState(0);
-    const [unknownCards, setUnknownCards] = useState(0);
-    const [showPlayerSelector, setShowPlayerSelector] = useState(false);
-    const [playerOptions, setPlayerOptions] = useState([]);
-    const [selectedPlayer, setSelectedPlayer] = useState("");
+    const [cards, setCards] = useState([]);
     const [guessCard, setGuessCard] = useState(2);
+    const [message, setMessage] = useState("");
+    const [playerNames, setPlayerNames] = useState([]);
+    const [playerOptions, setPlayerOptions] = useState([]);
+    const [publicState, setPublicState] = useState({});
+    const [record, setRecord] = useState("");
+    const [selectedPlayer, setSelectedPlayer] = useState("");
+    const [showAlert, setShowAlert] = useState(false);
+    const [showPlayerSelector, setShowPlayerSelector] = useState(false);
+    const [showDisconnect, setShowDisconnect] = useState(false);
+    const [state, setState] = useState("");
+    const [unknownCards, setUnknownCards] = useState(0);
+    const [usedCards, setUsedCards] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     const scrollViewRef = useRef();
     const ws = useRef();
@@ -55,9 +57,7 @@ const Game = ({ route }) => {
 
         ws.current.onmessage = ({ data }) => onMessage(data);
 
-        ws.current.onclose = () => {
-            console.log("Disconnected. Check internet or server.");
-        };
+        ws.current.onclose = () => setShowDisconnect(true);
 
         return () => ws.current.close();
     }, []);
@@ -86,9 +86,7 @@ const Game = ({ route }) => {
                 scrollViewRef.current.scrollToEnd();
             }
         } else if (type === "start") {
-            if (record.length > 100) {
-                setRecord("");
-            }
+            setRecord("");
             setMessage("");
         } else if (type === "deal") {
             setCards(cards);
@@ -118,8 +116,8 @@ const Game = ({ route }) => {
                 setShowPlayerSelector(true);
             } else {
                 // all players are protected by 4
+                setShowAlert(true);
                 setSelectedPlayer("");
-                play();
             }
         } else {
             play();
@@ -128,6 +126,7 @@ const Game = ({ route }) => {
 
     const play = () => {
         setShowPlayerSelector(false);
+        setShowAlert(false);
         send({
             action: "play",
             playedCard: cards[cardIndexSelected],
@@ -279,11 +278,17 @@ const Game = ({ route }) => {
                         </View>
                     }
                 </View>
-                <Button
-                    onPress={play}
-                    title="確定"
-                    color="goldenrod"
-                />
+                <Button onPress={play} title="確定" color="goldenrod" />
+            </CommonModal>
+            <CommonModal show={showAlert} closeModal={() => setShowAlert(false)}>
+                <StyleText fontSize={20} color="black" style={""}>其餘玩家皆有侍女保護，出此牌將沒有效果</StyleText>
+                <View style={{ flexDirection: "row", alignSelf: "stretch", justifyContent: "space-evenly", marginTop: 15 }}>
+                    <Button onPress={() => setShowAlert(false)} title="取消" color="goldenrod" />
+                    <Button onPress={play} title="仍要出牌" color="goldenrod" />
+                </View>
+            </CommonModal>
+            <CommonModal show={showDisconnect} closeModal={() => navigation.navigate("Home")}>
+                <StyleText fontSize={20} color="black">與伺服器失去連線</StyleText>
             </CommonModal>
         </View>
     );
