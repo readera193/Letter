@@ -106,15 +106,16 @@ const Hint = () => {
             />
 
             <Modal isVisible={isModalVisible} onBackdropPress={closeModal} style={styles.center}>
-                <View style={{ flex: 8 / 10 }}>
+                <View style={{ flexDirection: "row" }}>
                     <Image
                         source={images.cardHelping}
+                        resizeMode="contain"
                         style={styles.cardHelping}
                     />
-                    <Text style={styles.closeHint} onPress={closeModal}>
-                        點擊空白處關閉...
-                    </Text>
                 </View>
+                <Text style={styles.closeHint} onPress={closeModal}>
+                    點擊空白處關閉...
+                </Text>
             </Modal>
         </View>
     );

@@ -331,9 +331,8 @@ const styles = StyleSheet.create({
         width: 80,
     },
     card: {
-        flex: 1,
+        flex: 0.8,
         aspectRatio: 210 / 293,
-        margin: 5,
     },
     record: {
         flex: 1,
