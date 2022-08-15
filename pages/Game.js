@@ -57,7 +57,12 @@ const Game = ({ route, navigation }) => {
 
         ws.current.onmessage = ({ data }) => onMessage(data);
 
-        ws.current.onclose = () => setShowDisconnect(true);
+        let pingInterval = setInterval(() => ws.current.ping(), 25000);
+
+        ws.current.onclose = () => {
+            clearInterval(pingInterval);
+            setShowDisconnect(true);
+        };
 
         return () => ws.current.close();
     }, []);
