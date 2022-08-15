@@ -75,7 +75,7 @@ const Game = ({ route, navigation }) => {
         if (type === "update") {
             setState(state);
             setActionPlayer(actionPlayer);
-            setPlayerNames(playerNames.filter((name) => name !== username));
+            setPlayerNames(playerNames);
             setCardPoolRemaining(cardPoolRemaining);
             setCards(cards);
             setUnknownCards(unknownCards);
@@ -105,12 +105,12 @@ const Game = ({ route, navigation }) => {
         } else if ([1, 2, 3, 5, 6].includes(selectedCard)) {
             let targetPlayers = playerNames.filter((name) =>
                 !publicState[name].shield && !publicState[name].eliminated);
-            if (selectedCard === 5) {
-                targetPlayers.push(username);
-                setPlayerOptions(targetPlayers);
-                setSelectedPlayer(targetPlayers[0]);
-                setShowPlayerSelector(true);
-            } else if (targetPlayers.length > 0) {
+
+            if (selectedCard !== 5) {
+                targetPlayers = targetPlayers.filter((name) => name !== username);
+            }
+
+            if (targetPlayers.length > 0) {
                 setPlayerOptions(targetPlayers);
                 setSelectedPlayer(targetPlayers[0]);
                 setShowPlayerSelector(true);
@@ -139,7 +139,7 @@ const Game = ({ route, navigation }) => {
 
     const playerArea = useMemo(() => {
         if (state === "waiting") {
-            if (playerNames.length > 0) {
+            if (playerNames.length > 1) {
                 return (
                     <Button
                         onPress={() => send({ action: "start" })}
@@ -236,10 +236,16 @@ const Game = ({ route, navigation }) => {
 
                 </View>
                 <View style={styles.container}>
-                    <Text numberOfLines={2} style={styles.userNameText}>{username}</Text>
+                    <View style={{ flexDirection: "row", width: "70%" }}>
+                        {publicState[username]?.eliminated ? <MaterialCommunityIcons name="heart-broken" size={40} color="red" />
+                            : (actionPlayer === username) ? <Entypo name="triangle-right" size={40} color="red" />
+                                : publicState[username]?.shield ? <MaterialCommunityIcons name="shield-cross" size={40} color="green" />
+                                    : <Entypo name="triangle-up" size={40} color="transparent" />}
+                        <Text numberOfLines={1} style={styles.userNameText}>{username}</Text>
+                        <Entypo name="triangle-up" size={40} color="transparent" />
+                    </View>
                     <View style={styles.container}>
                         {playerArea}
-                        {/* Button: 催促按鈕 */}
                     </View>
                 </View>
             </ImageBackground>
@@ -319,7 +325,8 @@ const styles = StyleSheet.create({
         textShadowRadius: 1,
         color: "gold",
         height: 40,
-        fontSize: 30,
+        fontSize: 25,
+        paddingHorizontal: 10,
     },
     playerNameText: {
         textAlign: "center",
@@ -331,7 +338,7 @@ const styles = StyleSheet.create({
     publicState: {
         alignItems: "center",
         justifyContent: "center",
-        marginHorizontal: 10,
+        marginHorizontal: 5,
         backgroundColor: "white",
         borderRadius: 10,
         height: 80,
