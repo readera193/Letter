@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import Entypo from "react-native-vector-icons/Entypo";
-import { Picker } from "@react-native-picker/picker";
+import { WheelPicker } from "react-native-wheel-picker-android";
 import { StyleText, Manual, images, CommonModal } from "../component/components";
 import { baseURL } from "../api";
 
@@ -45,7 +45,7 @@ const Game = ({ route }) => {
     const [showPlayerSelector, setShowPlayerSelector] = useState(false);
     const [playerOptions, setPlayerOptions] = useState([]);
     const [selectedPlayer, setSelectedPlayer] = useState("");
-    const [guessCard, setGuessCard] = useState(0);
+    const [guessCard, setGuessCard] = useState(2);
 
     const scrollViewRef = useRef();
     const ws = useRef();
@@ -105,13 +105,16 @@ const Game = ({ route }) => {
         if ([5, 6].includes(selectedCard) && cards.includes(7)) {
             setMessage(`你手上有${cardText[selectedCard]}，必須棄掉皇后(伯爵夫人)`)
         } else if ([1, 2, 3, 5, 6].includes(selectedCard)) {
-            let targetPlayers = playerNames.filter((name) => !publicState[name].shield);
+            let targetPlayers = playerNames.filter((name) =>
+                !publicState[name].shield && !publicState[name].eliminated);
             if (selectedCard === 5) {
                 targetPlayers.push(username);
                 setPlayerOptions(targetPlayers);
+                setSelectedPlayer(targetPlayers[0]);
                 setShowPlayerSelector(true);
             } else if (targetPlayers.length > 0) {
                 setPlayerOptions(targetPlayers);
+                setSelectedPlayer(targetPlayers[0]);
                 setShowPlayerSelector(true);
             } else {
                 // all players are protected by 4
@@ -133,7 +136,6 @@ const Game = ({ route }) => {
         });
         setCardIndexSelected(-1);
         setSelectedPlayer("");
-        setGuessCard(0);
     };
 
     const playerArea = useMemo(() => {
@@ -155,14 +157,14 @@ const Game = ({ route }) => {
             }
         } else {
             return (
-                <View style={{ flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", }}>
-                    <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-evenly", alignItems: "center", }}>
+                <View style={{ flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+                    <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-evenly", alignItems: "center" }}>
                         {cards.map((card, index) =>
                             <TouchableOpacity
                                 key={index}
                                 onPress={() => setCardIndexSelected(index)}
                                 // cardIndexSelected use index to prevent get 2 same card
-                                style={(cardIndexSelected === index) ? styles.guessCard : {}}
+                                style={(cardIndexSelected === index) ? styles.selectedCard : {}}
                                 disabled={cards.length <= 1}
                             >
                                 <Image
@@ -174,7 +176,7 @@ const Game = ({ route }) => {
                         )}
                     </View>
                     {(actionPlayer === username) &&
-                        <View style={{ margin: 20, }}>
+                        <View style={{ margin: 20 }}>
                             {(cards.length <= 1) ?
                                 <Button
                                     onPress={() => send({ action: "draw" })}
@@ -197,7 +199,7 @@ const Game = ({ route }) => {
     }, [state, playerNames, actionPlayer, username, cards, cardIndexSelected]);
 
     return (
-        <View style={{ flex: 1, }}>
+        <View style={{ flex: 1 }}>
             <ImageBackground source={images.background} style={styles.container}>
                 <Manual />
                 <View style={styles.players}>
@@ -212,7 +214,7 @@ const Game = ({ route }) => {
                     )}
                 </View>
                 <View style={styles.infoArea}>
-                    <View style={{ padding: 5, alignItems: "center", justifyContent: "space-evenly", }}>
+                    <View style={{ padding: 5, alignItems: "center", justifyContent: "space-evenly" }}>
                         <Text>牌庫：{cardPoolRemaining}</Text>
                         <Text>未知的角色牌：{unknownCards}</Text>
                         <Text style={usedCards[8] === 1 ? { color: "red" } : {}}>公主(8)：( {usedCards[8]} / 1 )</Text>
@@ -224,8 +226,8 @@ const Game = ({ route }) => {
                         <Text style={usedCards[2] === 2 ? { color: "red" } : {}}>神父(2)：( {usedCards[2]} / 2 )</Text>
                         <Text style={usedCards[1] === 5 ? { color: "red" } : {}}>衛兵(1)：( {usedCards[1]} / 5 )</Text>
                     </View>
-                    <View style={{ flex: 1, padding: 5, }}>
-                        <Text style={{ textAlign: "center", textAlignVertical: "center", paddingBottom: 5, }}>遊戲紀錄：</Text>
+                    <View style={{ flex: 1, padding: 5 }}>
+                        <Text style={{ textAlign: "center", textAlignVertical: "center", paddingBottom: 5 }}>遊戲紀錄：</Text>
                         <View style={styles.record}>
                             <ScrollView ref={scrollViewRef}>
                                 <Text>{record}</Text>
@@ -246,32 +248,33 @@ const Game = ({ route }) => {
                 <StyleText fontSize={20} color="black">{message}</StyleText>
             </CommonModal>
             <CommonModal show={showPlayerSelector} closeModal={() => setShowPlayerSelector(false)}>
-                <StyleText fontSize={15} color="black">{pickerText[cards[cardIndexSelected]]}</StyleText>
-                <View style={{ alignItems: "center", justifyContent: "center", marginVertical: 5 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                        <View style={styles.picker}>
-                            <Picker
-                                selectedValue={selectedPlayer}
-                                style={{ flex: 1 }}
-                                onValueChange={(value) => setSelectedPlayer(value)}
-                            >
-                                <Picker.Item label="請選擇一位玩家" value="" enabled={false} />
-                                {playerOptions.map((name) => <Picker.Item key={name} label={name} value={name} />)}
-                            </Picker>
+                <StyleText
+                    fontSize={15}
+                    color="black"
+                    style={{ alignSelf: "flex-start" }}
+                >
+                    {pickerText[cards[cardIndexSelected]]}
+                </StyleText>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", marginVertical: 15 }}>
+                    <View style={styles.selectorContainer}>
+                        <Text>請選擇一位玩家：</Text>
+                        <View style={styles.wheelPickerContainer}>
+                            <WheelPicker
+                                flex={0.9}
+                                data={playerOptions}
+                                onItemSelected={(selectedIndex) => setSelectedPlayer(playerOptions[selectedIndex])}
+                            />
                         </View>
                     </View>
                     {cards[cardIndexSelected] === 1 &&
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                            <View style={styles.picker}>
-                                <Picker
-                                    selectedValue={guessCard}
-                                    style={{ flex: 1 }}
-                                    onValueChange={(value) => setGuessCard(value)}
-                                >
-                                    <Picker.Item label="猜測他的手牌" value={0} enabled={false} />
-                                    {[2, 3, 4, 5, 6, 7, 8].map((card) =>
-                                        <Picker.Item key={card} label={card + " - " + cardText[card]} value={card} />)}
-                                </Picker>
+                        <View style={[styles.selectorContainer, { borderLeftWidth: 0 }]}>
+                            <Text>猜測他的手牌：</Text>
+                            <View style={styles.wheelPickerContainer}>
+                                <WheelPicker
+                                    flex={0.9}
+                                    data={["2-神父", "3-男爵", "4-侍女", "5-王子", "6-國王", "7-皇后", "8-公主"]}
+                                    onItemSelected={(selectedIndex) => setGuessCard(selectedIndex + 2)}
+                                />
                             </View>
                         </View>
                     }
@@ -280,7 +283,6 @@ const Game = ({ route }) => {
                     onPress={play}
                     title="確定"
                     color="goldenrod"
-                    disabled={(selectedPlayer === "" || (cards[cardIndexSelected] === 1 && guessCard === 0))}
                 />
             </CommonModal>
         </View>
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         borderRadius: 10,
     },
-    guessCard: {
+    selectedCard: {
         borderWidth: 2,
         borderRadius: 10,
         borderColor: "red",
@@ -368,6 +370,17 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         height: 35,
         marginVertical: 5,
+    },
+    wheelPickerContainer: {
+        flexDirection: "row",
+        paddingTop: 50,
+        marginVertical: -40,
+    },
+    selectorContainer: {
+        flex: 1,
+        alignItems: "center",
+        paddingVertical: 10,
+        borderWidth: 1,
     },
 });
 

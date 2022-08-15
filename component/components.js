@@ -123,7 +123,7 @@ const Hint = () => {
 
 const CommonModal = ({ show, closeModal, children }) => (
     <Modal isVisible={show} onBackdropPress={closeModal} style={styles.center}>
-        <View style={styles.commonModalContainer} >
+        <View style={styles.commonModalContainer}>
             {children}
         </View>
         <Text style={styles.closeHint} onPress={closeModal}>
