@@ -1,0 +1,2 @@
+just for upload folder android\app\src\main\assets
+for npm script build
