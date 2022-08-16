@@ -13,18 +13,18 @@
 
 # 遊戲畫面
 
-## 首頁
+### 首頁
 ![首頁](/assets/home.jpg)
 
-## 規則
+### 規則
 ![規則](/assets/rule.jpg)
 
-## 衛兵猜測手牌
+### 衛兵猜測手牌
 ![衛兵猜測手牌](/assets/guess.jpg)
 
-## 玩家出局
+### 玩家出局
 ![玩家出局](/assets/gameover.jpg)
 
-## 侍女保護
+### 侍女保護
 ![首頁](/assets/protect.jpg)
 
