@@ -9,5 +9,5 @@ const request = axios.create({
 
 export const checkAPI = () => request.get("/");
 
-export const apiJoin = (data) => request.post("/join", data);
+export const apiJoin = (data) => request.post("/game/join", data);
 
