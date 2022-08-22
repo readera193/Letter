@@ -53,7 +53,9 @@ const Game = ({ route, navigation }) => {
     const ws = useRef();
 
     useEffect(() => {
-        ws.current = new WebSocket(`ws://${baseURL}?playerName=${username}`);
+        let isMounted = true;
+
+        ws.current = new WebSocket(`ws://${baseURL}?playerName=${username.replace(/\W/g, "+")}`);
 
         ws.current.onmessage = ({ data }) => onMessage(data);
 
@@ -61,10 +63,15 @@ const Game = ({ route, navigation }) => {
 
         ws.current.onclose = () => {
             clearInterval(pingInterval);
-            setShowDisconnect(true);
+            if (isMounted) {
+                setShowDisconnect(true);
+            }
         };
 
-        return () => ws.current.close();
+        return () => {
+            ws.current.close();
+            isMounted = false;
+        };
     }, []);
 
     const send = (data) => ws.current.send(JSON.stringify(data));

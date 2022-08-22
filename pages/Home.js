@@ -15,18 +15,26 @@ const Home = ({ navigation }) => {
     const [username, setUsername] = useState("");
     const [emptyAlert, setEmptyAlert] = useState("");
     const [message, setMessage] = useState("");
+    const [lock, setLock] = useState(false);
 
-    const startGame = async () => {
-        try {
-            if (username === "") {
-                setEmptyAlert("請輸入暱稱");
-            } else {
-                setEmptyAlert("");
-                await apiJoin({ playerName: username });
-                navigation.navigate("Game", { username: username });
-            }
-        } catch (error) {
-            setMessage(error?.response?.data || error.message);
+    const startGame = () => {
+        if (username === "") {
+            setEmptyAlert("請輸入暱稱");
+        } else if (!lock) {
+            setLock(true);
+            setEmptyAlert("");
+            apiJoin({ playerName: username }).then(({ status, data }) => {
+                if (status === 200) {
+                    navigation.navigate("Game", { username: username });
+                } else {
+                    throw data;
+                }
+            }).catch((error) => {
+                console.log("error occurred: ", error?.response?.data || error.message);
+                setMessage(error?.response?.data || error.message);
+            }).finally(() => {
+                setLock(false);
+            });
         }
     };
 
@@ -48,7 +56,7 @@ const Home = ({ navigation }) => {
                         />
                     </View>
                     <View style={{ margin: 5 }}>
-                        <TouchableOpacity onPress={startGame}>
+                        <TouchableOpacity onPress={startGame} disabled={lock}>
                             <StyleText fontSize={20} color="gold" style={styles.textShadow}>確定</StyleText>
                         </TouchableOpacity>
                     </View>
